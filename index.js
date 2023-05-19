@@ -51,6 +51,11 @@ async function run() {
     })
 
 
+    app.get('/toys',async(req,res)=>{
+      const cursor = {email:req.query.email}
+      const result = await toysAnimalsCollection.findOne(cursor);
+      res.send(result);
+    })
 
 
 
