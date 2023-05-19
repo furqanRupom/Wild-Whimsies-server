@@ -8,7 +8,7 @@ app.use(express.json())
 
 
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.WILD_NAME}:${process.env.WILD_PASS}@cluster0.eujpnmx.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -54,6 +54,13 @@ async function run() {
     app.get('/toys',async(req,res)=>{
       const cursor = {email:req.query.email}
       const result = await toysAnimalsCollection.findOne(cursor);
+      res.send(result);
+    })
+
+    app.delete('/toys/:id',async(req,res)=>{
+      const id = req.params.id
+      const query = {_id:new ObjectId(id)}
+      const result = await toysAnimalsCollection.deleteOne(query);
       res.send(result);
     })
 
