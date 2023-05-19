@@ -27,6 +27,22 @@ async function run() {
 
 
 
+    const tabsToysCollection = client.db('tabToysDB').collection('tabToys');
+
+    app.get('/tabToys',async(req,res)=>{
+      const result = await tabsToysCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    const toysAnimalsCollection = client.db('toysAnimalsDB').collection('toysAnimals');
+
+    app.post('/toys',async(req,res)=>{
+      const body = req.body;
+      // console.log(body)
+      const result = await toysAnimalsCollection.insertOne(body)
+      res.send(result);
+    })
 
 
 
