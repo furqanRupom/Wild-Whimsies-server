@@ -27,12 +27,7 @@ async function run() {
 
 
 
-    const tabsToysCollection = client.db('tabToysDB').collection('tabToys');
 
-    app.get('/tabToys',async(req,res)=>{
-      const result = await tabsToysCollection.find().toArray()
-      res.send(result)
-    })
 
 
     const toysAnimalsCollection = client.db('toysAnimalsDB').collection('toysAnimals');
@@ -45,17 +40,22 @@ async function run() {
     })
 
 
+
+
+
     app.get('/toys',async(req,res)=>{
       const result = await toysAnimalsCollection.find().toArray()
       res.send(result);
     })
 
+    app.get('/MyToys',async(req,res)=>{
+      console.log(req.query)
+      const cursor = {sellerEmail:req.query.sellerEmail}
 
-    app.get('/toys',async(req,res)=>{
-      const cursor = {email:req.query.email}
-      const result = await toysAnimalsCollection.findOne(cursor);
+      const result = await toysAnimalsCollection.find(cursor).toArray();
       res.send(result);
     })
+
 
     app.delete('/toys/:id',async(req,res)=>{
       const id = req.params.id
@@ -69,6 +69,24 @@ async function run() {
       const id = req.params.id;
       const query = {_id : new ObjectId(id)}
       const result = await toysAnimalsCollection.findOne(query);
+      res.send(result);
+    })
+
+
+    app.put('/toys/:id',async(req,res)=>{
+      const id = req.params.id;
+      const updatedInfo = req.body
+      const query = {_id:new ObjectId(id)}
+      const updatedToys = {
+        $set:{
+          price:updatedInfo.price,
+          description:updatedInfo.description,
+          quantity_available:updatedInfo.quantity_available
+        }
+      }
+      const options = {upsert:true}
+
+      const result = await toysAnimalsCollection.updateOne(query,updatedToys,options)
       res.send(result);
     })
 
