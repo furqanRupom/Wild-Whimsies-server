@@ -1,14 +1,12 @@
-const express = require('express');
-const cors = require('cors');
+const express = require("express");
+const cors = require("cors");
 const port = process.env.PORT || 5000;
 const app = express();
-require('dotenv').config()
+require("dotenv").config();
 app.use(cors());
-app.use(express.json())
+app.use(express.json());
 
-
-
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.WILD_NAME}:${process.env.WILD_PASS}@cluster0.eujpnmx.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -17,7 +15,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -25,75 +23,95 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const toysAnimalsCollection = client
+      .db("toysAnimalsDB")
+      .collection("toysAnimals");
 
-
-
-
-
-    const toysAnimalsCollection = client.db('toysAnimalsDB').collection('toysAnimals');
-
-    app.post('/toys',async(req,res)=>{
+    app.post("/toys", async (req, res) => {
       const body = req.body;
       // console.log(body)
-      const result = await toysAnimalsCollection.insertOne(body)
+      const result = await toysAnimalsCollection.insertOne(body);
       res.send(result);
-    })
+    });
 
-
-
-
-
-    app.get('/toys',async(req,res)=>{
-      const result = await toysAnimalsCollection.find().toArray()
+    app.get("/toys", async (req, res) => {
+      const result = await toysAnimalsCollection.find().toArray();
       res.send(result);
-    })
+    });
 
-    app.get('/MyToys',async(req,res)=>{
-      console.log(req.query)
-      const cursor = {sellerEmail:req.query.sellerEmail}
+    app.get("/MyToys", async (req, res) => {
 
-      const result = await toysAnimalsCollection.find(cursor).toArray();
-      res.send(result);
-    })
+      const { sortOrder,sellerEmail } = req?.query;
+
+      if(sortOrder && sellerEmail){
+        let query = {sellerEmail:sellerEmail};
+        let sortOptions = {};
+        sortOptions["price"] = sortOrder === "desc" ? -1 : 1 ;
+
+        try {
+          const result = await toysAnimalsCollection
+            .find(query)
+            .sort(sortOptions)
+            .toArray();
+
+          res.send(result);
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: "Internal server error" });
+        }
+      }else if(sellerEmail){
+        const query = {sellerEmail:sellerEmail}
+        const result = await toysAnimalsCollection.find(query).toArray()
+        res.send(result)
+      }
+
+    });
 
 
-    app.delete('/toys/:id',async(req,res)=>{
-      const id = req.params.id
-      const query = {_id:new ObjectId(id)}
+
+
+
+
+    app.delete("/toys/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
       const result = await toysAnimalsCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
-
-    app.get('/toys/:id',async(req,res)=>{
+    app.get("/toys/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id : new ObjectId(id)}
+      const query = { _id: new ObjectId(id) };
       const result = await toysAnimalsCollection.findOne(query);
       res.send(result);
-    })
+    });
 
-
-    app.put('/toys/:id',async(req,res)=>{
+    app.put("/toys/:id", async (req, res) => {
       const id = req.params.id;
-      const updatedInfo = req.body
-      const query = {_id:new ObjectId(id)}
+      const updatedInfo = req.body;
+      const query = { _id: new ObjectId(id) };
       const updatedToys = {
-        $set:{
-          price:updatedInfo.price,
-          description:updatedInfo.description,
-          quantity_available:updatedInfo.quantity_available
-        }
-      }
-      const options = {upsert:true}
+        $set: {
+          price: updatedInfo.price,
+          description: updatedInfo.description,
+          quantity_available: updatedInfo.quantity_available,
+        },
+      };
+      const options = { upsert: true };
 
-      const result = await toysAnimalsCollection.updateOne(query,updatedToys,options)
+      const result = await toysAnimalsCollection.updateOne(
+        query,
+        updatedToys,
+        options
+      );
       res.send(result);
-    })
-
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -101,19 +119,10 @@ async function run() {
 }
 run().catch(console.dir);
 
+app.get("/", (req, res) => {
+  res.send("wild whimsies app is in progress");
+});
 
-
-
-
-
-
-
-
-app.get('/',(req,res)=>{
-    res.send('wild whimsies app is in progress');
-})
-
-
-app.listen(port,()=>{
-    console.log(`wild whimsies app is running on port ${port}`)
-})
+app.listen(port, () => {
+  console.log(`wild whimsies app is running on port ${port}`);
+});
