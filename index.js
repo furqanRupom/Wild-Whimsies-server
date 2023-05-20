@@ -34,26 +34,27 @@ async function run() {
       res.send(result);
     });
 
-  app.get("/toys", async (req, res) => {
-  const limit = req.query.limit ? parseInt(req.query.limit) : 20;
-  const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+    app.get("/AllToys", async (req, res) => {
+      const result = await toysAnimalsCollection.find().toArray();
+      res.send(result);
+    });
 
-  const totalDocuments = await toysAnimalsCollection.countDocuments();
+    app.get("/toys", async (req, res) => {
+      const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+      let query = toysAnimalsCollection.find();
+      if (limit !== -1) {
+        query = query.limit(limit);
+      }
+      const result = await query.toArray();
+      res.send(result);
+    });
 
-  if (skip >= totalDocuments) {
-    res.send([]);
-    return;
-  }
-
-  let query = toysAnimalsCollection.find().skip(skip);
-  if (limit !== -1) {
-    query = query.limit(limit);
-  }
-
-  const result = await query.toArray();
-  res.send(result);
-});
-
+    app.get("/SearchToys/:name", async (req, res) => {
+      const SearchName = req.params.name;
+      const query = { name: { $regex: SearchName, $options: "i" } };
+      const result = await toysAnimalsCollection.find(query).toArray();
+      res.send(result);
+    });
 
     app.get("/MyToys", async (req, res) => {
       const { sortOrder, sellerEmail } = req?.query;
