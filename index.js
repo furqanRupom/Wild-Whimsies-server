@@ -34,19 +34,34 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/toys", async (req, res) => {
-      const result = await toysAnimalsCollection.find().toArray();
-      res.send(result);
-    });
+  app.get("/toys", async (req, res) => {
+  const limit = req.query.limit ? parseInt(req.query.limit) : 20;
+  const skip = req.query.skip ? parseInt(req.query.skip) : 0;
+
+  const totalDocuments = await toysAnimalsCollection.countDocuments();
+
+  if (skip >= totalDocuments) {
+    res.send([]);
+    return;
+  }
+
+  let query = toysAnimalsCollection.find().skip(skip);
+  if (limit !== -1) {
+    query = query.limit(limit);
+  }
+
+  const result = await query.toArray();
+  res.send(result);
+});
+
 
     app.get("/MyToys", async (req, res) => {
+      const { sortOrder, sellerEmail } = req?.query;
 
-      const { sortOrder,sellerEmail } = req?.query;
-
-      if(sortOrder && sellerEmail){
-        let query = {sellerEmail:sellerEmail};
+      if (sortOrder && sellerEmail) {
+        let query = { sellerEmail: sellerEmail };
         let sortOptions = {};
-        sortOptions["price"] = sortOrder === "desc" ? -1 : 1 ;
+        sortOptions["price"] = sortOrder === "desc" ? -1 : 1;
 
         try {
           const result = await toysAnimalsCollection
@@ -59,18 +74,12 @@ async function run() {
           console.error(error);
           res.status(500).json({ message: "Internal server error" });
         }
-      }else if(sellerEmail){
-        const query = {sellerEmail:sellerEmail}
-        const result = await toysAnimalsCollection.find(query).toArray()
-        res.send(result)
+      } else if (sellerEmail) {
+        const query = { sellerEmail: sellerEmail };
+        const result = await toysAnimalsCollection.find(query).toArray();
+        res.send(result);
       }
-
     });
-
-
-
-
-
 
     app.delete("/toys/:id", async (req, res) => {
       const id = req.params.id;
